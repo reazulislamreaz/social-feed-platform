@@ -1,0 +1,718 @@
+/* Functional overrides on Buddy Script CSS — keep minimal */
+._design_slot {
+  display: contents;
+}
+
+._header_react_root {
+  position: relative;
+  z-index: 1050;
+}
+
+._form_error {
+  color: #cf1322;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+._liked_active {
+  color: #1890ff !important;
+  font-weight: 600;
+}
+
+._likers_list {
+  font-size: 13px;
+  color: #666;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+._likers_list button,
+._likers_count_btn {
+  border: 0;
+  background: transparent;
+  color: #1890ff;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+._likers_count_btn {
+  color: inherit;
+  font: inherit;
+}
+
+._post_image_preview {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+._feed_create_actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+._visibility_select {
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #fff;
+  color: #666;
+  height: 32px;
+  max-width: 96px;
+}
+
+._page_loader {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+}
+
+._comment_reply_indent {
+  margin-left: 48px;
+  margin-top: 12px;
+}
+
+._auth_disabled_link {
+  opacity: 0.7;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Registration page — match BuddyScript mockup */
+._social_registration_right_logo {
+  text-align: center;
+}
+
+._social_registration_form_btn {
+  text-align: center;
+}
+
+._social_registration_form_btn ._btn1 {
+  display: block;
+  width: 100%;
+  padding: 12px 24px;
+}
+
+._social_registration_bottom_txt {
+  text-align: center;
+}
+
+._social_registration_form_check_input {
+  cursor: pointer;
+}
+
+/* Notification panel — match BuddyScript mockup */
+._main_layout {
+  overflow: visible;
+}
+
+._header_react_root,
+._header_nav,
+._header_nav .container,
+._header_nav .navbar-collapse,
+._header_nav_list,
+._header_nav_item {
+  overflow: visible !important;
+}
+
+._header_nav {
+  position: fixed;
+  z-index: 1060;
+  background: #fff;
+}
+
+._header_notify_btn {
+  position: relative !important;
+  cursor: pointer;
+  overflow: visible !important;
+}
+
+._header_nav_item {
+  position: relative;
+}
+
+._header_nav_link ._counting,
+li._header_nav_item ._counting {
+  position: absolute;
+  top: 8px;
+  right: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background: #1890ff !important;
+  color: #fff !important;
+  border: 2px solid #fff;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Anchored under the bell — Buddy Script placement (offset left of icon) */
+._notification_dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  left: -110px !important;
+  right: auto !important;
+  transform: translateY(8px) !important;
+  z-index: 2000 !important;
+  width: 400px !important;
+  max-width: min(400px, calc(100vw - 24px)) !important;
+  max-height: min(560px, calc(100vh - 100px)) !important;
+  height: auto !important;
+  padding: 16px 0 8px !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+._notification_dropdown.show {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateY(4px) !important;
+}
+
+._notifications_content {
+  padding: 0 16px;
+  margin-bottom: 12px !important;
+}
+
+._notifications_drop_box {
+  padding: 0 8px 8px;
+}
+
+._notifications_drop_btn_grp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+
+._notifications_btn_link,
+._notifications_btn_link1 {
+  border: none !important;
+  border-radius: 6px !important;
+  height: 32px !important;
+  padding: 6px 14px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+._notifications_btn_link {
+  background: rgba(24, 144, 255, 0.15) !important;
+  color: #1890ff !important;
+}
+
+._notifications_btn_link1 {
+  background: #f0f2f5 !important;
+  color: #050505 !important;
+}
+
+._notifications_all {
+  margin-top: 8px !important;
+}
+
+._notification_box {
+  align-items: flex-start !important;
+  margin: 0 0 4px !important;
+  padding: 10px 12px !important;
+  border-radius: 8px;
+  gap: 0;
+}
+
+._notification_box._notification_unread {
+  background: #f0f2f5;
+}
+
+._notification_box:hover {
+  background: #f0f2f5 !important;
+}
+
+._notification_image {
+  flex: 0 0 48px !important;
+  margin-right: 12px !important;
+}
+
+._notify_img {
+  max-width: 48px !important;
+  width: 48px;
+  height: 48px !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+._notification_para {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: #65676b !important;
+  line-height: 1.4 !important;
+  margin-bottom: 4px;
+}
+
+._notification_para ._notify_txt_link,
+._notification_para span {
+  color: #050505 !important;
+  font-weight: 600 !important;
+}
+
+._nitification_time span {
+  color: #1890ff !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+._notifications_drop_right {
+  z-index: 10;
+  border-radius: 8px;
+  top: 28px;
+}
+
+._notification_box_right_link {
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 1199px) {
+  ._notification_dropdown {
+    left: -80px !important;
+  }
+}
+
+._nav_profile_dropdown.show,
+._feed_timeline_dropdown.show {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 50;
+}
+
+._feed_timeline_dropdown_link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+._mar_b0 {
+  margin-bottom: 0 !important;
+}
+
+._mar_b12 {
+  margin-bottom: 12px;
+}
+
+/* Skeleton loading */
+@keyframes _skel_shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+._skel_pulse {
+  background: linear-gradient(90deg, #eceff3 25%, #f7f8fa 37%, #eceff3 63%);
+  background-size: 400% 100%;
+  animation: _skel_shimmer 1.35s ease infinite;
+  border-radius: 8px;
+}
+
+._feed_skeleton_stories {
+  display: flex;
+  gap: 12px;
+  overflow: hidden;
+  background: #fff;
+  padding: 12px;
+}
+
+._feed_skeleton_story {
+  width: 112px;
+  height: 190px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+}
+
+._feed_skeleton_create {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+._feed_skeleton_create_actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+._feed_skeleton_post_top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+._feed_skeleton_reacts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+._feed_skeleton_reaction {
+  height: 48px;
+  margin-top: 16px;
+  border-radius: 0;
+}
+
+._feed_skeleton_comments {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+._feed_skeleton_comment {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.skel_avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.skel_avatar_sm {
+  width: 32px;
+  height: 32px;
+}
+
+.skel_line {
+  border-radius: 6px;
+}
+
+.skel_chip {
+  width: 72px;
+  height: 28px;
+}
+
+.skel_btn {
+  width: 88px;
+  height: 36px;
+  margin-left: auto;
+  border-radius: 8px;
+}
+
+.skel_media {
+  width: 100%;
+  height: 280px;
+  border-radius: 10px;
+}
+
+.skel_bubble {
+  height: 64px;
+  border-radius: 12px;
+  width: 100%;
+}
+
+/* Notifications page + panel */
+._notifications_page_wrap {
+  width: 100%;
+}
+
+._notifications_page_card {
+  background: #fff;
+  padding: 20px 12px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  min-height: calc(100vh - 140px);
+}
+
+._notifications_page_card ._notifications_content {
+  padding: 0 12px 4px;
+  margin-bottom: 16px !important;
+}
+
+._notifications_page_card ._notifications_drop_box {
+  padding: 0 4px;
+}
+
+._notifications_page_card ._notifications_drop_btn_grp {
+  padding: 0 8px;
+  margin-bottom: 12px;
+}
+
+._notifications_page_card ._notification_box {
+  padding: 12px !important;
+  margin-bottom: 2px !important;
+}
+
+._notifications_page_badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #1890ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+._notification_unread {
+  background: #f0f2f5 !important;
+  border-radius: 8px;
+}
+
+._notification_link {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+._notifications_empty {
+  color: #888;
+  font-size: 14px;
+  padding: 24px 8px;
+  text-align: center;
+}
+
+._notifications_drop_right {
+  z-index: 5;
+}
+
+._feed_inner_timeline_reaction_link span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+._feed_inner_timeline_reaction_link ._reaction_svg {
+  flex: 0 0 auto;
+}
+
+/* Post engagement + comments — match BuddyScript mock */
+._feed_inner_timeline_total_reacts_para1 a,
+._feed_inner_timeline_total_reacts_para2 {
+  color: rgba(0, 0, 0, 0.46) !important;
+}
+
+._feed_inner_timeline_total_reacts_para1 span,
+._feed_inner_timeline_total_reacts_para2 span {
+  color: rgba(0, 0, 0, 0.46) !important;
+  font-weight: 500;
+}
+
+._feed_inner_timeline_reaction {
+  background: #fbfcfd !important;
+  padding: 4px 8px !important;
+  gap: 0;
+}
+
+._feed_reaction {
+  border-radius: 6px;
+  margin: 0 !important;
+}
+
+._feed_reaction_active,
+._feed_reaction:hover {
+  background: #e4f1fd !important;
+}
+
+._feed_inner_comment_box {
+  background: #f0f2f5 !important;
+  border-radius: 24px !important;
+  padding: 4px 12px 4px 8px !important;
+}
+
+._feed_inner_comment_box_form {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 4px;
+}
+
+._feed_inner_comment_box_content {
+  width: auto !important;
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+
+._feed_inner_comment_box_content_image {
+  flex: 0 0 auto;
+  margin-right: 4px;
+}
+
+._comment_img {
+  width: 28px;
+  height: 28px;
+  max-width: 28px !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+._comment_textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 8px 4px !important;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+._feed_inner_comment_box_icon {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+._feed_inner_comment_box_icon_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+}
+
+._comment_main {
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+._comment_details {
+  background: #f0f2f5 !important;
+  border-radius: 18px !important;
+  padding: 10px 14px 12px !important;
+  margin: 0 0 42px !important;
+  max-width: min(100%, 420px) !important;
+}
+
+._comment_name_title {
+  margin-bottom: 2px;
+}
+
+._comment_status_text {
+  margin: 0;
+  line-height: 1.35 !important;
+}
+
+._total_reactions {
+  bottom: -12px !important;
+  right: 10px !important;
+  top: auto !important;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid #e4e6eb;
+  padding: 2px 8px 2px 6px !important;
+  gap: 2px;
+}
+
+._total_react span {
+  display: inline-flex !important;
+  margin-left: -2px !important;
+}
+
+._total_react span:first-child {
+  margin-left: 0 !important;
+}
+
+._total {
+  margin: 0 0 0 4px !important;
+  font-size: 13px !important;
+  color: #65676b !important;
+}
+
+._comment_reply_num {
+  bottom: -30px !important;
+}
+
+._comment_reply_list li span {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #65676b !important;
+}
+
+._comment_reply_list li ._time_link {
+  color: #65676b !important;
+  font-weight: 400 !important;
+}
+
+._previous_comment_txt {
+  color: #65676b !important;
+  cursor: pointer;
+  padding: 0;
+}
+
+._previous_comment_txt:hover {
+  text-decoration: underline;
+}
+
+._comment_area > ._feed_inner_comment_box {
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+._comment_main + ._comment_main {
+  margin-top: 8px;
+}
+
+._comment_area > ._comment_main {
+  margin-top: 12px;
+}
+
+._comment_img1 {
+  width: 40px;
+  height: 40px;
+  max-width: 40px !important;
+  object-fit: cover !important;
+  border-radius: 50%;
+}
+
+._react_img1,
+._react_img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+
+._feed_inner_timeline_total_reacts_para {
+  font-size: 12px !important;
+  font-weight: 600;
+}
+
