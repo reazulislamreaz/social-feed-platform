@@ -47,9 +47,19 @@ frontend/src/
   context/       Auth session
 ```
 
-**Scalability:** cursor pagination, denormalized `likeCount`, public/private feed split + indexes, optional Redis feed cache, local-disk uploads.
+**Scalability:** cursor pagination, denormalized `likeCount`, public/private feed split + indexes, optional Redis feed cache, local or S3/R2 uploads.
 
 **Security:** bcrypt hashing, refresh-token rotation, Helmet, CORS credentials, Zod validation, rate limits on auth/writes/likes, magic-byte image checks + EXIF strip, access JWT in memory only.
+
+### Production images
+
+Frontend (`frontend.sellx.no`) and API (`reaz.sellx.no`) are different origins. Uploads must be reachable from the browser:
+
+1. Prefer `STORAGE_DRIVER=s3` (R2/S3) with `S3_PUBLIC_URL` on the API host.
+2. Or keep `local` **with a persistent disk** and set `PUBLIC_API_URL=https://reaz.sellx.no` so image URLs are absolute.
+3. Frontend production build needs `VITE_API_URL=https://reaz.sellx.no`.
+
+Local-only `/uploads` paths in the DB will 404 on production until those files exist on the API host or are moved to object storage.
 
 ## Setup
 

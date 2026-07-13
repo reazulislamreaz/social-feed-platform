@@ -24,7 +24,12 @@ export class LocalStorage implements ObjectStorage {
     await fs.mkdir(path.dirname(full), { recursive: true });
     await fs.writeFile(full, input.body);
 
-    const base = env.PUBLIC_ASSET_BASE_URL?.replace(/\/$/, "");
+    // Prefer absolute URLs in production so a separate frontend origin can load them
+    const base = (
+      env.PUBLIC_ASSET_BASE_URL ||
+      env.PUBLIC_API_URL ||
+      ""
+    ).replace(/\/$/, "");
     const url = base ? `${base}/uploads/${input.key}` : `/uploads/${input.key}`;
     return { url, key: input.key };
   }

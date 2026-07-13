@@ -10,20 +10,21 @@ import postRoutes from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import likeRoutes from "./routes/like.routes.js";
 
-/**
- * Origins the browser is allowed to load post images from.
- * Default Helmet CSP is `img-src 'self'`, which blocks images served from a
- * different origin than the app. Images are stored on local disk and served
- * from `/uploads`; a CDN can optionally front them via PUBLIC_ASSET_BASE_URL.
- */
+/** Origins allowed for <img> when the API itself serves HTML (Helmet CSP). */
 function imageCspSources(): string[] {
   const sources = new Set<string>(["'self'", "data:", "blob:"]);
 
-  if (env.PUBLIC_ASSET_BASE_URL) {
+  for (const raw of [
+    env.PUBLIC_API_URL,
+    env.PUBLIC_ASSET_BASE_URL,
+    env.S3_PUBLIC_URL,
+    env.CLIENT_URL,
+  ]) {
+    if (!raw) continue;
     try {
-      sources.add(new URL(env.PUBLIC_ASSET_BASE_URL).origin);
+      sources.add(new URL(raw).origin);
     } catch {
-      // Ignore a malformed URL — a bad env var shouldn't crash CSP setup
+      // ignore malformed
     }
   }
 
@@ -54,14 +55,16 @@ export function createApp() {
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
 
-  // Images are always stored on local disk and served from here.
-  app.use(
-    "/uploads",
-    express.static(path.resolve(process.cwd(), env.UPLOAD_DIR), {
-      maxAge: env.NODE_ENV === "production" ? "7d" : 0,
-      fallthrough: true,
-    }),
-  );
+  // Local disk only — S3 objects are served from the bucket / CDN
+  if (env.STORAGE_DRIVER === "local") {
+    app.use(
+      "/uploads",
+      express.static(path.resolve(process.cwd(), env.UPLOAD_DIR), {
+        maxAge: env.NODE_ENV === "production" ? "7d" : 0,
+        fallthrough: true,
+      }),
+    );
+  }
 
   app.get("/api/health", (_req, res) => {
     res.json({ success: true, message: "Taskbook API is healthy" });

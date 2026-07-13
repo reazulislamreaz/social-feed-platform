@@ -3,7 +3,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { cacheDelByPrefix, cacheGet, cacheSet } from "../config/redis.js";
 import { AppError } from "../utils/errors.js";
-import { authorPreview } from "../utils/serializers.js";
+import { authorPreview, publicAssetUrl } from "../utils/serializers.js";
 
 function decodeCursor(cursor?: string): { createdAt: Date; id: string } | null {
   if (!cursor) return null;
@@ -134,7 +134,7 @@ function serializePost(post: {
   return {
     id: post.id,
     content: post.content,
-    imageUrl: post.imageUrl,
+    imageUrl: publicAssetUrl(post.imageUrl),
     visibility: post.visibility,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
