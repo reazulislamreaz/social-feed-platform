@@ -1,8 +1,8 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { env } from "../config/env.js";
+import { env, s3PublicBaseUrl } from "../config/env.js";
 import type { ObjectStorage, StoredFile } from "./types.js";
 
-/** S3 / R2 / S3-compatible object storage for production uploads */
+/** S3 / R2 / S3-compatible object storage for persistent production uploads */
 export class S3Storage implements ObjectStorage {
   private client: S3Client;
   private bucket: string;
@@ -25,25 +25,21 @@ export class S3Storage implements ObjectStorage {
     body: Buffer;
     contentType: string;
   }): Promise<StoredFile> {
+    // Prefix keeps post media tidy in the bucket
+    const key = input.key.startsWith("posts/") ? input.key : `posts/${input.key}`;
+
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: input.key,
+        Key: key,
         Body: input.body,
         ContentType: input.contentType,
         CacheControl: "public, max-age=31536000, immutable",
       }),
     );
 
-    const publicBase = (env.S3_PUBLIC_URL || env.PUBLIC_ASSET_BASE_URL || "").replace(
-      /\/$/,
-      "",
-    );
-    const url = publicBase
-      ? `${publicBase}/${input.key}`
-      : `https://${this.bucket}.s3.${env.S3_REGION}.amazonaws.com/${input.key}`;
-
-    return { url, key: input.key };
+    const url = `${s3PublicBaseUrl()}/${key}`;
+    return { url, key };
   }
 
   async delete(key: string): Promise<void> {

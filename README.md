@@ -53,13 +53,25 @@ frontend/src/
 
 ### Production images
 
-Frontend (`frontend.sellx.no`) and API (`reaz.sellx.no`) are different origins. Uploads must be reachable from the browser:
+Frontend (`frontend.sellx.no`) and API (`reaz.sellx.no`) are different origins. Use S3 so uploads persist:
 
-1. Prefer `STORAGE_DRIVER=s3` (R2/S3) with `S3_PUBLIC_URL` on the API host.
-2. Or keep `local` **with a persistent disk** and set `PUBLIC_API_URL=https://reaz.sellx.no` so image URLs are absolute.
-3. Frontend production build needs `VITE_API_URL=https://reaz.sellx.no`.
+```bash
+STORAGE_DRIVER=s3
+AWS_S3_BUCKET_NAME=areawins
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-2
+CLIENT_URL=https://frontend.sellx.no
+PUBLIC_API_URL=https://reaz.sellx.no
+```
 
-Local-only `/uploads` paths in the DB will 404 on production until those files exist on the API host or are moved to object storage.
+Frontend production build:
+
+```bash
+VITE_API_URL=https://reaz.sellx.no
+```
+
+Bucket needs public `s3:GetObject` (or a CDN in front) so `<img>` tags can load. Old local `/uploads/...` rows in the DB stay broken until those posts are re-uploaded.
 
 ## Setup
 

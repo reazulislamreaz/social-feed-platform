@@ -28,6 +28,10 @@ function imageCspSources(): string[] {
     }
   }
 
+  if (env.STORAGE_DRIVER === "s3" && env.S3_BUCKET) {
+    sources.add(`https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`);
+  }
+
   return [...sources];
 }
 
