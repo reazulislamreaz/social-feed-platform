@@ -25,8 +25,13 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
-  if (config.data instanceof FormData) {
-    delete config.headers["Content-Type"];
+  // Let the browser set multipart boundary — never force JSON on FormData
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    if (typeof config.headers.set === "function") {
+      config.headers.set("Content-Type", false as unknown as string);
+    } else {
+      delete config.headers["Content-Type"];
+    }
   }
   return config;
 });
@@ -87,6 +92,10 @@ export function getErrorMessage(error: unknown): string {
 
 export function assetUrl(path: string | null | undefined): string | null {
   if (!path) return null;
-  if (path.startsWith("http")) return path;
-  return `${API_BASE}${path}`;
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")) {
+    return path;
+  }
+  // Absolute app path (/uploads/...) or API-relative
+  if (path.startsWith("/")) return `${API_BASE}${path}`;
+  return `${API_BASE}/${path}`;
 }

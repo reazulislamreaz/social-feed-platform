@@ -635,11 +635,23 @@ export function PostCard({ post }: { post: Post }) {
         <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap" }}>
           {post.content}
         </h4>
-        {image && (
+        {image ? (
           <div className="_feed_inner_timeline_image">
-            <img src={image} alt="" className="_time_img" />
+            <img
+              src={image}
+              alt=""
+              className="_time_img"
+              loading="lazy"
+              onError={(e) => {
+                // Hide broken image slot instead of showing a broken icon
+                (e.currentTarget.parentElement as HTMLElement | null)?.style.setProperty(
+                  "display",
+                  "none",
+                );
+              }}
+            />
           </div>
-        )}
+        ) : null}
       </div>
 
       <PostReactsRow

@@ -11,6 +11,8 @@ export function CreatePost() {
   const [preview, setPreview] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Keep latest file in a ref so mutate() never posts a stale null image
+  const imageRef = useRef<File | null>(null);
   const qc = useQueryClient();
 
   const create = useMutation({
@@ -21,9 +23,15 @@ export function CreatePost() {
       const text = (ta?.value ?? "").trim();
       if (!text) throw new Error("Write something before posting");
       const visibility = (sel?.value as Visibility) || "PUBLIC";
-      return api.createPost({ content: text, visibility, image });
+      return api.createPost({
+        content: text,
+        visibility,
+        image: imageRef.current,
+      });
     },
     onSuccess: () => {
+      if (preview) URL.revokeObjectURL(preview);
+      imageRef.current = null;
       setImage(null);
       setPreview(null);
       if (fileRef.current) fileRef.current.value = "";
@@ -40,11 +48,13 @@ export function CreatePost() {
     const t = e.target as HTMLElement;
     if (t.closest("._feed_inner_text_area_bottom_photo")) {
       e.preventDefault();
+      e.stopPropagation();
       fileRef.current?.click();
       return;
     }
     if (t.closest("._feed_inner_text_area_btn_link")) {
       e.preventDefault();
+      e.stopPropagation();
       if (!create.isPending) create.mutate();
     }
   }
@@ -54,6 +64,19 @@ export function CreatePost() {
       {preview && (
         <div className="_feed_inner_text_area _b_radious6 _padd_r24 _padd_l24 _padd_t16 _mar_b0">
           <img src={preview} alt="Preview" className="_post_image_preview" />
+          <button
+            type="button"
+            className="_remove_image_btn"
+            onClick={() => {
+              if (preview) URL.revokeObjectURL(preview);
+              imageRef.current = null;
+              setImage(null);
+              setPreview(null);
+              if (fileRef.current) fileRef.current.value = "";
+            }}
+          >
+            Remove photo
+          </button>
         </div>
       )}
       <input
@@ -63,6 +86,8 @@ export function CreatePost() {
         hidden
         onChange={(e) => {
           const file = e.target.files?.[0] ?? null;
+          if (preview) URL.revokeObjectURL(preview);
+          imageRef.current = file;
           setImage(file);
           setPreview(file ? URL.createObjectURL(file) : null);
         }}
@@ -73,6 +98,9 @@ export function CreatePost() {
         style={{ opacity: create.isPending ? 0.7 : 1, pointerEvents: create.isPending ? "none" : "auto" }}
         dangerouslySetInnerHTML={{ __html: createPostHtml }}
       />
+      {image && !preview && (
+        <p className="text-muted _padd_l24">Photo ready to post</p>
+      )}
       {create.isPending && (
         <p className="text-muted _padd_l24 _padd_b8">Posting…</p>
       )}

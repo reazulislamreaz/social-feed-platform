@@ -10,11 +10,49 @@ import postRoutes from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import likeRoutes from "./routes/like.routes.js";
 
+/**
+ * Origins the browser is allowed to load post images from.
+ * Default Helmet CSP is `img-src 'self'`, which blocks images served from a
+ * different origin than the app (S3/CDN in prod, or a split API/app host).
+ */
+function imageCspSources(): string[] {
+  const sources = new Set<string>(["'self'", "data:", "blob:"]);
+
+  const candidates = [
+    env.PUBLIC_ASSET_BASE_URL,
+    env.S3_PUBLIC_URL,
+    env.S3_ENDPOINT,
+    env.STORAGE_DRIVER === "s3" && env.S3_BUCKET
+      ? `https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`
+      : undefined,
+  ].filter((v): v is string => Boolean(v));
+
+  for (const candidate of candidates) {
+    try {
+      sources.add(new URL(candidate).origin);
+    } catch {
+      // Ignore malformed URLs — a bad env var shouldn't crash CSP setup
+    }
+  }
+
+  return [...sources];
+}
+
 export function createApp() {
   const app = express();
 
   app.set("trust proxy", 1);
-  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          "img-src": imageCspSources(),
+        },
+      },
+    }),
+  );
   app.use(
     cors({
       origin: env.CLIENT_URL,
