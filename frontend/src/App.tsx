@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { GuestRoute, ProtectedRoute } from "./routes/ProtectedRoute";
@@ -36,6 +37,14 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{
+              duration: 4000,
+            }}
+          />
         </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>

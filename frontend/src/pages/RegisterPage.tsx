@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getErrorMessage } from "../services/api";
+import { toast } from "../utils/toast";
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -12,26 +12,25 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [agreed, setAgreed] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
     if (!agreed) {
-      setError("Please agree to terms & conditions");
+      toast.error("Please agree to terms & conditions");
       return;
     }
     if (password !== repeatPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     setPending(true);
     try {
       await register({ firstName: firstName.trim(), lastName: lastName.trim(), email, password });
+      toast.success("Account created — welcome!");
       navigate("/", { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.fromError(err, "Registration failed");
     } finally {
       setPending(false);
     }
@@ -186,7 +185,6 @@ export function RegisterPage() {
                       </div>
                     </div>
                   </div>
-                  {error && <p className="_form_error">{error}</p>}
                   <div className="row">
                     <div className="col-lg-12 col-md-12 col-xl-12 col-sm-12">
                       <div className="_social_registration_form_btn _mar_t40 _mar_b60">

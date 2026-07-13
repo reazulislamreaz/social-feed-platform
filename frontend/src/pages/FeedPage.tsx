@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CreatePost } from "../components/CreatePost";
 import { FeedShell } from "../components/FeedShell";
@@ -7,8 +8,8 @@ import { PostCard } from "../components/PostCard";
 import { RightSidebar } from "../components/RightSidebar";
 import { StoriesStrip } from "../components/StoriesStrip";
 import { useAuth } from "../context/AuthContext";
-import { getErrorMessage } from "../services/api";
 import * as api from "../services/endpoints";
+import { toast } from "../utils/toast";
 
 export function FeedPage() {
   const { user } = useAuth();
@@ -20,6 +21,10 @@ export function FeedPage() {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
 
+  useEffect(() => {
+    if (feed.isError) toast.fromError(feed.error, "Could not load feed");
+  }, [feed.isError, feed.error]);
+
   const posts = feed.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
@@ -30,8 +35,6 @@ export function FeedPage() {
         <>
           <StoriesStrip />
           <CreatePost />
-
-          {feed.isError && <p className="_form_error">{getErrorMessage(feed.error)}</p>}
 
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />

@@ -2,11 +2,12 @@ import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LikeButton } from "./LikeButton";
 import { CommentsSkeleton } from "./FeedSkeleton";
-import { assetUrl, getErrorMessage } from "../services/api";
+import { assetUrl } from "../services/api";
 import * as api from "../services/endpoints";
 import type { Author, Comment, LikeTargetType, Post, Reply } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { displayName, timeAgo, timeAgoShort } from "../utils/format";
+import { toast } from "../utils/toast";
 
 function initials(author: Author) {
   return `${author.firstName[0] ?? ""}${author.lastName[0] ?? ""}`.toUpperCase() || "?";
@@ -18,6 +19,26 @@ function formatLikedBy(likers: Author[], count: number) {
   if (names.length === 0) return `${count} like${count === 1 ? "" : "s"}`;
   if (count <= names.length) return `Liked by ${names.join(", ")}`;
   return `Liked by ${names.join(", ")} and ${count - names.length} others`;
+}
+
+/** Buddy Script demo feed photos — used when a post has no uploaded image */
+const DEMO_FEED_IMAGES = [
+  "/assets/images/timeline_img.png",
+  "/assets/images/healthy_tracking.jpg",
+  "/assets/images/img1.png",
+  "/assets/images/img2.png",
+  "/assets/images/img3.png",
+  "/assets/images/img4.png",
+  "/assets/images/img5.png",
+  "/assets/images/img6.png",
+];
+
+function demoFeedImage(postId: string) {
+  let hash = 0;
+  for (let i = 0; i < postId.length; i++) {
+    hash = (hash + postId.charCodeAt(i) * (i + 1)) % 997;
+  }
+  return DEMO_FEED_IMAGES[hash % DEMO_FEED_IMAGES.length];
 }
 
 const MicIcon = () => (
@@ -105,11 +126,13 @@ function useTargetLike(
       }
       return snapshot;
     },
-    onError: (_err, _vars, snapshot) => {
-      if (!snapshot) return;
-      setLocalLiked(snapshot.liked);
-      setLocalCount(snapshot.count);
-      setLocalLikers(snapshot.likers);
+    onError: (err, _vars, snapshot) => {
+      if (snapshot) {
+        setLocalLiked(snapshot.liked);
+        setLocalCount(snapshot.count);
+        setLocalLikers(snapshot.likers);
+      }
+      toast.fromError(err, "Could not update like");
     },
     onSuccess: (data) => {
       setLocalLiked(data.liked);
@@ -138,7 +161,6 @@ function CommentComposer({
   onChange,
   onSubmit,
   pending,
-  error,
   inputRef,
   autoFocus,
 }: {
@@ -146,7 +168,6 @@ function CommentComposer({
   onChange: (v: string) => void;
   onSubmit: () => void;
   pending?: boolean;
-  error?: string | null;
   inputRef?: RefObject<HTMLTextAreaElement | null>;
   autoFocus?: boolean;
 }) {
@@ -198,7 +219,6 @@ function CommentComposer({
           </button>
         </div>
       </form>
-      {error && <p className="_form_error">{error}</p>}
     </div>
   );
 }
@@ -340,7 +360,9 @@ function CommentBlock({ comment, postId }: { comment: Comment; postId: string })
       setText("");
       void qc.invalidateQueries({ queryKey: ["comments", postId] });
       void qc.invalidateQueries({ queryKey: ["feed"] });
+      toast.success("Reply posted");
     },
+    onError: (err) => toast.fromError(err, "Could not post reply"),
   });
 
   function focusReply() {
@@ -422,7 +444,6 @@ function CommentBlock({ comment, postId }: { comment: Comment; postId: string })
           onChange={setText}
           onSubmit={() => replyMutation.mutate()}
           pending={replyMutation.isPending}
-          error={replyMutation.isError ? getErrorMessage(replyMutation.error) : null}
           inputRef={replyRef}
           autoFocus={replyFocused}
         />
@@ -480,8 +501,8 @@ function PostMenu({
               className="_feed_timeline_dropdown_link"
               onClick={(e) => {
                 e.preventDefault();
-                if (confirm("Delete this post?")) onDelete();
                 onClose();
+                toast.confirm("Delete this post?", onDelete, "Delete");
               }}
             >
               <span>
@@ -564,7 +585,14 @@ export function PostCard({ post }: { post: Post }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLikers, setShowLikers] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
-  const image = assetUrl(post.imageUrl);
+  const demoImage = demoFeedImage(post.id);
+  const [imageSrc, setImageSrc] = useState(
+    () => assetUrl(post.imageUrl) ?? demoImage,
+  );
+
+  useEffect(() => {
+    setImageSrc(assetUrl(post.imageUrl) ?? demoFeedImage(post.id));
+  }, [post.imageUrl, post.id]);
 
   const comments = useInfiniteQuery({
     queryKey: ["comments", post.id],
@@ -580,12 +608,18 @@ export function PostCard({ post }: { post: Post }) {
       setCommentText("");
       void qc.invalidateQueries({ queryKey: ["comments", post.id] });
       void qc.invalidateQueries({ queryKey: ["feed"] });
+      toast.success("Comment posted");
     },
+    onError: (err) => toast.fromError(err, "Could not post comment"),
   });
 
   const del = useMutation({
     mutationFn: () => api.deletePost(post.id),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["feed"] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["feed"] });
+      toast.success("Post deleted");
+    },
+    onError: (err) => toast.fromError(err, "Could not delete post"),
   });
 
   const commentItems = comments.data?.pages.flatMap((p) => p.items) ?? [];
@@ -635,23 +669,17 @@ export function PostCard({ post }: { post: Post }) {
         <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap" }}>
           {post.content}
         </h4>
-        {image ? (
-          <div className="_feed_inner_timeline_image">
-            <img
-              src={image}
-              alt=""
-              className="_time_img"
-              loading="lazy"
-              onError={(e) => {
-                // Hide broken image slot instead of showing a broken icon
-                (e.currentTarget.parentElement as HTMLElement | null)?.style.setProperty(
-                  "display",
-                  "none",
-                );
-              }}
-            />
-          </div>
-        ) : null}
+        <div className="_feed_inner_timeline_image">
+          <img
+            src={imageSrc}
+            alt=""
+            className="_time_img"
+            loading="lazy"
+            onError={() => {
+              if (imageSrc !== demoImage) setImageSrc(demoImage);
+            }}
+          />
+        </div>
       </div>
 
       <PostReactsRow
@@ -717,7 +745,6 @@ export function PostCard({ post }: { post: Post }) {
           onChange={setCommentText}
           onSubmit={() => createComment.mutate()}
           pending={createComment.isPending}
-          error={createComment.isError ? getErrorMessage(createComment.error) : null}
           inputRef={commentRef}
         />
       </div>

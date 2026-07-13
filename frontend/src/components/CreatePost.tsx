@@ -1,13 +1,12 @@
 import { useRef, useState, type MouseEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "../services/endpoints";
-import { getErrorMessage } from "../services/api";
 import type { Visibility } from "../types";
+import { toast } from "../utils/toast";
 import createPostHtml from "../design/create_post.html?raw";
 
 /** Create-post card — exact feed.html markup, wired to the API */
 export function CreatePost() {
-  const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -32,7 +31,6 @@ export function CreatePost() {
     onSuccess: () => {
       if (preview) URL.revokeObjectURL(preview);
       imageRef.current = null;
-      setImage(null);
       setPreview(null);
       if (fileRef.current) fileRef.current.value = "";
       const root = rootRef.current;
@@ -41,7 +39,9 @@ export function CreatePost() {
       const sel = root?.querySelector("select._visibility_select") as HTMLSelectElement | null;
       if (sel) sel.value = "PUBLIC";
       void qc.invalidateQueries({ queryKey: ["feed"] });
+      toast.success("Post published");
     },
+    onError: (err) => toast.fromError(err, "Could not create post"),
   });
 
   function onClick(e: MouseEvent<HTMLDivElement>) {
@@ -70,7 +70,6 @@ export function CreatePost() {
             onClick={() => {
               if (preview) URL.revokeObjectURL(preview);
               imageRef.current = null;
-              setImage(null);
               setPreview(null);
               if (fileRef.current) fileRef.current.value = "";
             }}
@@ -88,8 +87,8 @@ export function CreatePost() {
           const file = e.target.files?.[0] ?? null;
           if (preview) URL.revokeObjectURL(preview);
           imageRef.current = file;
-          setImage(file);
           setPreview(file ? URL.createObjectURL(file) : null);
+          if (file) toast.info("Photo attached");
         }}
       />
       <div
@@ -98,13 +97,9 @@ export function CreatePost() {
         style={{ opacity: create.isPending ? 0.7 : 1, pointerEvents: create.isPending ? "none" : "auto" }}
         dangerouslySetInnerHTML={{ __html: createPostHtml }}
       />
-      {image && !preview && (
-        <p className="text-muted _padd_l24">Photo ready to post</p>
-      )}
       {create.isPending && (
         <p className="text-muted _padd_l24 _padd_b8">Posting…</p>
       )}
-      {create.isError && <p className="_form_error _padd_l24">{getErrorMessage(create.error)}</p>}
     </div>
   );
 }

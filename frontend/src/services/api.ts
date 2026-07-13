@@ -95,7 +95,9 @@ export function assetUrl(path: string | null | undefined): string | null {
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")) {
     return path;
   }
-  // Absolute app path (/uploads/...) or API-relative
+  // Static frontend assets stay on the app origin
+  if (path.startsWith("/assets/")) return path;
+  // API uploads (/uploads/...) go through VITE_API_URL in production
   if (path.startsWith("/")) return `${API_BASE}${path}`;
   return `${API_BASE}/${path}`;
 }

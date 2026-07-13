@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import * as api from "../services/endpoints";
 import type { Author, LikeTargetType } from "../types";
 import { displayName } from "../utils/format";
+import { toast } from "../utils/toast";
 
 type Props = {
   targetType: LikeTargetType;
@@ -77,11 +78,13 @@ export function LikeButton({
 
       return snapshot;
     },
-    onError: (_err, _vars, snapshot) => {
-      if (!snapshot) return;
-      setLocalLiked(snapshot.liked);
-      setLocalCount(snapshot.count);
-      setLocalLikers(snapshot.likers);
+    onError: (err, _vars, snapshot) => {
+      if (snapshot) {
+        setLocalLiked(snapshot.liked);
+        setLocalCount(snapshot.count);
+        setLocalLikers(snapshot.likers);
+      }
+      toast.fromError(err, "Could not update like");
     },
     onSuccess: (data) => {
       setLocalLiked(data.liked);

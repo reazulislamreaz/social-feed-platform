@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getErrorMessage } from "../services/api";
+import { toast } from "../utils/toast";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -11,18 +11,17 @@ export function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
     setPending(true);
     try {
       await login(email, password);
+      toast.success("Welcome back!");
       navigate(from, { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.fromError(err, "Login failed");
     } finally {
       setPending(false);
     }
@@ -130,7 +129,6 @@ export function LoginPage() {
                       </div>
                     </div>
                   </div>
-                  {error && <p className="_form_error">{error}</p>}
                   <div className="row">
                     <div className="col-lg-12 col-md-12 col-xl-12 col-sm-12">
                       <div className="_social_login_form_btn _mar_t40 _mar_b60">
