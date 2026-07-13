@@ -10,12 +10,12 @@ Converted the provided **Login**, **Registration**, and **Feed** HTML/CSS into a
 | Auth (JWT) with authorization | Access JWT + HttpOnly refresh cookie (rotated/hashed) |
 | Register: first name, last name, email, password | ✅ |
 | Feed is a protected route | Frontend guard + `requireAuth` on all feed APIs |
-| Create posts (text + image) | Multer local upload |
+| Create posts (text + image) | Multer → magic-byte check → EXIF strip → local/S3 |
 | Newest posts first | `createdAt DESC` + cursor pagination |
-| Like / unlike | Posts, comments, replies |
-| Show who liked | `likers[]` on entities + UI list |
+| Like / unlike | Posts, comments, replies (optimistic UI) |
+| Show who liked | Real liker names + expandable lists on posts/comments/replies |
 | Comments + replies + likes | ✅ |
-| Public / private posts | Public for all; private only for author |
+| Public / private posts | Public for all authed users; private only for author |
 
 ## Design fidelity notes
 

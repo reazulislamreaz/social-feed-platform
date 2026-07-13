@@ -1,40 +1,28 @@
 import { useMemo, useState } from "react";
-import { DEMO_NOTIFICATIONS, type AppNotification } from "../data/notifications";
+import { useNotifications } from "../context/NotificationContext";
 
 type Filter = "all" | "unread";
 
 type Props = {
-  /** When true, renders inside the header dropdown */
+  /** Compact dropdown layout under the bell */
   embedded?: boolean;
   initialFilter?: Filter;
   onOpenFullPage?: () => void;
-  onMarkAllRead?: () => void;
 };
 
 export function NotificationsPanel({
   embedded = false,
   initialFilter = "all",
   onOpenFullPage,
-  onMarkAllRead,
 }: Props) {
+  const { items, markAllRead, markOneRead } = useNotifications();
   const [filter, setFilter] = useState<Filter>(initialFilter);
-  const [items, setItems] = useState<AppNotification[]>(DEMO_NOTIFICATIONS);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const visible = useMemo(
     () => (filter === "unread" ? items.filter((n) => n.unread) : items),
     [filter, items],
   );
-
-  function markAllRead() {
-    setItems((prev) => prev.map((n) => ({ ...n, unread: false })));
-    onMarkAllRead?.();
-    setMenuOpen(false);
-  }
-
-  function markOneRead(id: string) {
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)));
-  }
 
   return (
     <div
@@ -43,6 +31,7 @@ export function NotificationsPanel({
           ? "_notifications_panel_inner"
           : "_notifications_page_card _b_radious6"
       }
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="_notifications_content">
         <h4 className="_notifications_content_title">Notifications</h4>
@@ -55,6 +44,7 @@ export function NotificationsPanel({
               setMenuOpen((v) => !v);
             }}
             aria-label="Notification options"
+            aria-expanded={menuOpen}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="4" height="17" fill="none" viewBox="0 0 4 17">
               <circle cx="2" cy="2" r="2" fill="#C4C4C4" />
@@ -66,12 +56,19 @@ export function NotificationsPanel({
             <div className="_notifications_drop_right" style={{ display: "block" }}>
               <ul className="_notification_list">
                 <li className="_notification_item">
-                  <button type="button" className="_notification_link" onClick={markAllRead}>
+                  <button
+                    type="button"
+                    className="_notification_link"
+                    onClick={() => {
+                      markAllRead();
+                      setMenuOpen(false);
+                    }}
+                  >
                     Mark as all read
                   </button>
                 </li>
                 <li className="_notification_item">
-                  <span className="_notification_link">Notifivations seetings</span>
+                  <span className="_notification_link">Notifications settings</span>
                 </li>
                 {onOpenFullPage && (
                   <li className="_notification_item">

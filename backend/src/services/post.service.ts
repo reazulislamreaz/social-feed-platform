@@ -259,8 +259,28 @@ export async function deletePost(postId: string, userId: string) {
     throw new AppError(403, "You can only delete your own posts", "FORBIDDEN");
   }
 
+  // Polymorphic likes have no FK — clean them up before cascade-deleting the tree
+  const comments = await prisma.comment.findMany({
+    where: { postId },
+    select: { id: true, replies: { select: { id: true } } },
+  });
+  const commentIds = comments.map((c) => c.id);
+  const replyIds = comments.flatMap((c) => c.replies.map((r) => r.id));
+
   await prisma.$transaction([
-    prisma.like.deleteMany({ where: { targetType: "POST", targetId: postId } }),
+    prisma.like.deleteMany({
+      where: {
+        OR: [
+          { targetType: "POST", targetId: postId },
+          ...(commentIds.length
+            ? [{ targetType: "COMMENT" as const, targetId: { in: commentIds } }]
+            : []),
+          ...(replyIds.length
+            ? [{ targetType: "REPLY" as const, targetId: { in: replyIds } }]
+            : []),
+        ],
+      },
+    }),
     prisma.post.delete({ where: { id: postId } }),
   ]);
   await cacheDelByPrefix("feed:");

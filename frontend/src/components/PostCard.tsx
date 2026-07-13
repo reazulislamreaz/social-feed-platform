@@ -8,13 +8,17 @@ import type { Author, Comment, LikeTargetType, Post, Reply } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { displayName, timeAgo, timeAgoShort } from "../utils/format";
 
-const REACT_AVATARS = [
-  "/assets/images/react_img1.png",
-  "/assets/images/react_img2.png",
-  "/assets/images/react_img3.png",
-  "/assets/images/react_img4.png",
-  "/assets/images/react_img5.png",
-];
+function initials(author: Author) {
+  return `${author.firstName[0] ?? ""}${author.lastName[0] ?? ""}`.toUpperCase() || "?";
+}
+
+function formatLikedBy(likers: Author[], count: number) {
+  if (count <= 0) return "No likes yet";
+  const names = likers.slice(0, 3).map(displayName);
+  if (names.length === 0) return `${count} like${count === 1 ? "" : "s"}`;
+  if (count <= names.length) return `Liked by ${names.join(", ")}`;
+  return `Liked by ${names.join(", ")} and ${count - names.length} others`;
+}
 
 const MicIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 16 16">
@@ -67,10 +71,12 @@ function useTargetLike(
   count: number,
   likers: Author[],
 ) {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [localLiked, setLocalLiked] = useState(liked);
   const [localCount, setLocalCount] = useState(count);
   const [localLikers, setLocalLikers] = useState(likers);
+  const [showLikers, setShowLikers] = useState(false);
 
   useEffect(() => {
     setLocalLiked(liked);
@@ -82,6 +88,28 @@ function useTargetLike(
     mutationFn: async () => {
       if (localLiked) return api.removeLike(targetType, targetId);
       return api.addLike(targetType, targetId);
+    },
+    onMutate: () => {
+      const snapshot = { liked: localLiked, count: localCount, likers: localLikers };
+      const nextLiked = !localLiked;
+      setLocalLiked(nextLiked);
+      setLocalCount((c) => Math.max(0, c + (nextLiked ? 1 : -1)));
+      if (user) {
+        setLocalLikers((list) => {
+          if (nextLiked) {
+            const me = { id: user.id, firstName: user.firstName, lastName: user.lastName };
+            return [me, ...list.filter((u) => u.id !== user.id)].slice(0, 8);
+          }
+          return list.filter((u) => u.id !== user.id);
+        });
+      }
+      return snapshot;
+    },
+    onError: (_err, _vars, snapshot) => {
+      if (!snapshot) return;
+      setLocalLiked(snapshot.liked);
+      setLocalCount(snapshot.count);
+      setLocalLikers(snapshot.likers);
     },
     onSuccess: (data) => {
       setLocalLiked(data.liked);
@@ -97,7 +125,11 @@ function useTargetLike(
     count: localCount,
     likers: localLikers,
     pending: mutation.isPending,
-    toggle: () => mutation.mutate(),
+    showLikers,
+    toggleLikers: () => setShowLikers((v) => !v),
+    toggle: () => {
+      if (!mutation.isPending) mutation.mutate();
+    },
   };
 }
 
@@ -212,6 +244,22 @@ function ReactionPill({
   );
 }
 
+function LikersPanel({ likers, count }: { likers: Author[]; count: number }) {
+  if (count <= 0) return null;
+  return (
+    <div className="_likers_list _likers_inline _mar_t4">
+      <p className="_comment_status_text">{formatLikedBy(likers, count)}</p>
+      {likers.length > 0 && (
+        <ul>
+          {likers.map((u) => (
+            <li key={u.id}>{displayName(u)}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function ReplyBlock({ reply }: { reply: Reply }) {
   const like = useTargetLike("REPLY", reply.id, reply.likedByMe, reply.likeCount, reply.likers);
 
@@ -237,9 +285,10 @@ function ReplyBlock({ reply }: { reply: Reply }) {
           <ReactionPill
             count={like.count}
             showHeart={false}
-            onClick={like.toggle}
-            title={like.likers.map(displayName).join(", ")}
+            onClick={like.toggleLikers}
+            title={formatLikedBy(like.likers, like.count)}
           />
+          {like.showLikers && <LikersPanel likers={like.likers} count={like.count} />}
           <div className="_comment_reply">
             <div className="_comment_reply_num">
               <ul className="_comment_reply_list">
@@ -252,7 +301,7 @@ function ReplyBlock({ reply }: { reply: Reply }) {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") like.toggle();
                     }}
-                    title={like.likers.map(displayName).join(", ") || "Like"}
+                    title={formatLikedBy(like.likers, like.count)}
                   >
                     Like.
                   </span>
@@ -320,13 +369,10 @@ function CommentBlock({ comment, postId }: { comment: Comment; postId: string })
           </div>
           <ReactionPill
             count={like.count}
-            onClick={like.toggle}
-            title={
-              like.likers.length
-                ? `Liked by ${like.likers.map(displayName).join(", ")}`
-                : "Like this comment"
-            }
+            onClick={like.toggleLikers}
+            title={formatLikedBy(like.likers, like.count)}
           />
+          {like.showLikers && <LikersPanel likers={like.likers} count={like.count} />}
           <div className="_comment_reply">
             <div className="_comment_reply_num">
               <ul className="_comment_reply_list">
@@ -339,11 +385,7 @@ function CommentBlock({ comment, postId }: { comment: Comment; postId: string })
                     onKeyDown={(e) => {
                       if (e.key === "Enter") like.toggle();
                     }}
-                    title={
-                      like.likers.length
-                        ? `Liked by ${like.likers.map(displayName).join(", ")}`
-                        : "Like"
-                    }
+                    title={formatLikedBy(like.likers, like.count)}
                   >
                     Like.
                   </span>
@@ -459,19 +501,18 @@ function PostMenu({
 function PostReactsRow({
   likeCount,
   commentCount,
+  likers,
   onFocusComment,
   onShowLikers,
 }: {
   likeCount: number;
   commentCount: number;
+  likers: Author[];
   onFocusComment: () => void;
   onShowLikers: () => void;
 }) {
   const badge = likeCount > 9 ? "9+" : String(Math.max(likeCount, 0));
-  const showStack = likeCount > 0;
-  const avatars = showStack
-    ? REACT_AVATARS.slice(0, Math.min(5, Math.max(3, Math.min(likeCount, 5))))
-    : [];
+  const preview = likers.slice(0, Math.min(5, likeCount));
 
   return (
     <div className="_feed_inner_timeline_total_reacts _padd_r24 _padd_l24 _mar_b26">
@@ -483,17 +524,18 @@ function PostReactsRow({
         }}
         role="button"
         tabIndex={0}
-        title="See who liked"
+        title={formatLikedBy(likers, likeCount)}
       >
-        {avatars.map((src, i) => (
-          <img
-            key={src}
-            src={src}
-            alt=""
-            className={i === 0 ? "_react_img1" : i < 3 ? "_react_img" : "_react_img _rect_img_mbl_none"}
-          />
+        {preview.map((person, i) => (
+          <span
+            key={person.id}
+            className={i === 0 ? "_react_img1 _liker_avatar" : i < 3 ? "_react_img _liker_avatar" : "_react_img _rect_img_mbl_none _liker_avatar"}
+            aria-hidden
+          >
+            {initials(person)}
+          </span>
         ))}
-        {showStack && <p className="_feed_inner_timeline_total_reacts_para">{badge}</p>}
+        {likeCount > 0 && <p className="_feed_inner_timeline_total_reacts_para">{badge}</p>}
       </div>
       <div className="_feed_inner_timeline_total_reacts_txt">
         <p className="_feed_inner_timeline_total_reacts_para1">
@@ -508,7 +550,7 @@ function PostReactsRow({
           </a>
         </p>
         <p className="_feed_inner_timeline_total_reacts_para2">
-          <span>122</span> Share
+          <span>0</span> Share
         </p>
       </div>
     </div>
@@ -522,7 +564,7 @@ export function PostCard({ post }: { post: Post }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLikers, setShowLikers] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
-  const image = assetUrl(post.imageUrl) ?? "/assets/images/timeline_img.png";
+  const image = assetUrl(post.imageUrl);
 
   const comments = useInfiniteQuery({
     queryKey: ["comments", post.id],
@@ -548,7 +590,6 @@ export function PostCard({ post }: { post: Post }) {
 
   const commentItems = comments.data?.pages.flatMap((p) => p.items) ?? [];
   const isOwner = user?.id === post.author.id;
-  const likerNames = post.likers.slice(0, 3).map(displayName).join(", ");
 
   return (
     <div className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _mar_b16">
@@ -594,22 +635,31 @@ export function PostCard({ post }: { post: Post }) {
         <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap" }}>
           {post.content}
         </h4>
-        <div className="_feed_inner_timeline_image">
-          <img src={image} alt="" className="_time_img" />
-        </div>
+        {image && (
+          <div className="_feed_inner_timeline_image">
+            <img src={image} alt="" className="_time_img" />
+          </div>
+        )}
       </div>
 
       <PostReactsRow
         likeCount={post.likeCount}
         commentCount={post.commentCount}
+        likers={post.likers}
         onFocusComment={() => commentRef.current?.focus()}
         onShowLikers={() => setShowLikers((v) => !v)}
       />
 
-      {showLikers && post.likers.length > 0 && (
+      {showLikers && (
         <div className="_likers_list _padd_r24 _padd_l24 _mar_b12">
-          Liked by {likerNames}
-          {post.likeCount > 3 ? ` and ${post.likeCount - 3} others` : ""}
+          <p>{formatLikedBy(post.likers, post.likeCount)}</p>
+          {post.likers.length > 0 && (
+            <ul>
+              {post.likers.map((u) => (
+                <li key={u.id}>{displayName(u)}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -662,6 +712,9 @@ export function PostCard({ post }: { post: Post }) {
 
       <div className="_timline_comment_main">
         {comments.isLoading && <CommentsSkeleton />}
+        {!comments.isLoading && commentItems.length === 0 && (
+          <p className="text-muted _padd_l24 _padd_r24 _padd_t8">No comments yet. Be the first.</p>
+        )}
         {!comments.isLoading && (comments.hasNextPage || commentItems.length > 1) && (
           <div className="_previous_comment">
             <button
@@ -672,8 +725,8 @@ export function PostCard({ post }: { post: Post }) {
               }}
             >
               {comments.hasNextPage
-                ? `View ${Math.max(commentItems.length, 4)} previous comments`
-                : `View ${Math.max(0, post.commentCount - 1)} previous comments`}
+                ? "View previous comments"
+                : `View ${Math.max(0, post.commentCount - commentItems.length)} previous comments`}
             </button>
           </div>
         )}

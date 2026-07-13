@@ -45,7 +45,7 @@ export function CreatePost() {
     }
     if (t.closest("._feed_inner_text_area_btn_link")) {
       e.preventDefault();
-      create.mutate();
+      if (!create.isPending) create.mutate();
     }
   }
 
@@ -67,7 +67,15 @@ export function CreatePost() {
           setPreview(file ? URL.createObjectURL(file) : null);
         }}
       />
-      <div ref={rootRef} onClick={onClick} dangerouslySetInnerHTML={{ __html: createPostHtml }} />
+      <div
+        ref={rootRef}
+        onClick={onClick}
+        style={{ opacity: create.isPending ? 0.7 : 1, pointerEvents: create.isPending ? "none" : "auto" }}
+        dangerouslySetInnerHTML={{ __html: createPostHtml }}
+      />
+      {create.isPending && (
+        <p className="text-muted _padd_l24 _padd_b8">Posting…</p>
+      )}
       {create.isError && <p className="_form_error _padd_l24">{getErrorMessage(create.error)}</p>}
     </div>
   );

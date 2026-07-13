@@ -1,11 +1,10 @@
 import { FeedShell } from "../components/FeedShell";
-import { LeftSidebar } from "../components/LeftSidebar";
 import { NotificationsPanel } from "../components/NotificationsPanel";
 
-/** Full notifications page — same UI as the header dropdown panel */
+/** Full notifications page — same panel UI as the header dropdown */
 export function NotificationsPage() {
   return (
-    <FeedShell left={<LeftSidebar />}>
+    <FeedShell>
       <div className="_notifications_page_wrap">
         <NotificationsPanel />
       </div>

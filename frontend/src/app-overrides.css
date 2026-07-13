@@ -26,6 +26,30 @@
   line-height: 1.4;
 }
 
+._likers_list ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+._liker_avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: #1890ff !important;
+  vertical-align: middle;
+  line-height: 1;
+  user-select: none;
+}
+
+._mar_t4 {
+  margin-top: 4px;
+}
+
 ._likers_list button,
 ._likers_count_btn {
   border: 0;
@@ -106,7 +130,7 @@
 
 /* Notification panel — match BuddyScript mockup */
 ._main_layout {
-  overflow: visible;
+  overflow: visible !important;
 }
 
 ._header_react_root,
@@ -114,7 +138,8 @@
 ._header_nav .container,
 ._header_nav .navbar-collapse,
 ._header_nav_list,
-._header_nav_item {
+._header_nav_item,
+._header_notify_btn {
   overflow: visible !important;
 }
 
@@ -127,7 +152,6 @@
 ._header_notify_btn {
   position: relative !important;
   cursor: pointer;
-  overflow: visible !important;
 }
 
 ._header_nav_item {
@@ -155,40 +179,26 @@ li._header_nav_item ._counting {
   padding: 0 4px;
 }
 
-/* Anchored under the bell — Buddy Script placement (offset left of icon) */
-._notification_dropdown {
-  position: absolute !important;
-  top: 100% !important;
-  left: -110px !important;
-  right: auto !important;
-  transform: translateY(8px) !important;
-  z-index: 2000 !important;
-  width: 400px !important;
-  max-width: min(400px, calc(100vw - 24px)) !important;
-  max-height: min(560px, calc(100vh - 100px)) !important;
-  height: auto !important;
-  padding: 16px 0 8px !important;
-  border-radius: 8px !important;
-  background: #fff !important;
-  box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2) !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+/* Fixed notifications portal — styles mostly inline; keep content polish here */
+._notify_portal_panel {
+  font-family: inherit;
 }
 
-._notification_dropdown.show {
-  display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-  transform: translateY(4px) !important;
+._notifications_panel_inner {
+  display: block;
+  width: 100%;
 }
 
 ._notifications_content {
   padding: 0 16px;
   margin-bottom: 12px !important;
+}
+
+._notifications_content_title {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #050505 !important;
+  margin: 0 !important;
 }
 
 ._notifications_drop_box {
@@ -290,9 +300,11 @@ li._header_nav_item ._counting {
   cursor: pointer;
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 991px) {
+  #_notify_drop._notification_dropdown,
   ._notification_dropdown {
-    left: -80px !important;
+    right: -40px !important;
+    width: min(360px, calc(100vw - 16px)) !important;
   }
 }
 
