@@ -10,7 +10,7 @@ async function main() {
   app.listen(env.PORT, () => {
     console.log(`API listening on http://localhost:${env.PORT}`);
     if (env.REDIS_URL) console.log("Feed cache: Redis enabled");
-    console.log(`Uploads: ${env.STORAGE_DRIVER}`);
+    console.log(`Uploads: local disk (${env.UPLOAD_DIR}/)`);
   });
 }
 

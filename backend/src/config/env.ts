@@ -11,18 +11,11 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 
-  // Uploads — local disk by default; set STORAGE_DRIVER=s3 for object storage
-  STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+  // Uploads — always stored on local disk and served from /uploads
   UPLOAD_DIR: z.string().default("uploads"),
   MAX_FILE_SIZE_MB: z.coerce.number().default(5),
+  // Optional CDN in front of /uploads (also added to the image CSP)
   PUBLIC_ASSET_BASE_URL: z.string().optional(),
-
-  S3_BUCKET: z.string().optional(),
-  S3_REGION: z.string().default("auto"),
-  S3_ENDPOINT: z.string().optional(),
-  S3_ACCESS_KEY_ID: z.string().optional(),
-  S3_SECRET_ACCESS_KEY: z.string().optional(),
-  S3_PUBLIC_URL: z.string().optional(),
 
   // Optional Redis — feed responses are cached briefly when set
   REDIS_URL: z.string().optional(),
@@ -37,18 +30,5 @@ if (!parsed.success) {
 }
 
 const data = parsed.data;
-
-if (data.STORAGE_DRIVER === "s3") {
-  const missing = [
-    !data.S3_BUCKET && "S3_BUCKET",
-    !data.S3_ACCESS_KEY_ID && "S3_ACCESS_KEY_ID",
-    !data.S3_SECRET_ACCESS_KEY && "S3_SECRET_ACCESS_KEY",
-  ].filter(Boolean);
-
-  if (missing.length > 0) {
-    console.error(`STORAGE_DRIVER=s3 requires: ${missing.join(", ")}`);
-    process.exit(1);
-  }
-}
 
 export const env = data;

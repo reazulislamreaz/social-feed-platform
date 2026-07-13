@@ -10,7 +10,7 @@ Converted the provided **Login**, **Registration**, and **Feed** HTML/CSS into a
 | Auth (JWT) with authorization | Access JWT + HttpOnly refresh cookie (rotated/hashed) |
 | Register: first name, last name, email, password | ✅ |
 | Feed is a protected route | Frontend guard + `requireAuth` on all feed APIs |
-| Create posts (text + image) | Multer → magic-byte check → EXIF strip → local/S3 |
+| Create posts (text + image) | Multer → magic-byte check → EXIF strip → local disk |
 | Newest posts first | `createdAt DESC` + cursor pagination |
 | Like / unlike | Posts, comments, replies (optimistic UI) |
 | Show who liked | Real liker names + expandable lists on posts/comments/replies |
@@ -47,7 +47,7 @@ frontend/src/
   context/       Auth session
 ```
 
-**Scalability:** cursor pagination, denormalized `likeCount`, public/private feed split + indexes, optional Redis feed cache, S3-ready uploads.
+**Scalability:** cursor pagination, denormalized `likeCount`, public/private feed split + indexes, optional Redis feed cache, local-disk uploads.
 
 **Security:** bcrypt hashing, refresh-token rotation, Helmet, CORS credentials, Zod validation, rate limits on auth/writes/likes, magic-byte image checks + EXIF strip, access JWT in memory only.
 
