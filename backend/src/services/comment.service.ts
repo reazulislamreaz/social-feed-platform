@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { cacheDelByPrefix } from "../config/redis.js";
 import { AppError } from "../utils/errors.js";
 import { authorPreview } from "../utils/serializers.js";
 import { canViewPost, decodeCursor, encodeCursor, likePreview } from "./post.service.js";
@@ -21,6 +22,7 @@ export async function createComment(input: {
     },
     include: { author: true },
   });
+  await cacheDelByPrefix("feed:");
 
   return {
     id: comment.id,

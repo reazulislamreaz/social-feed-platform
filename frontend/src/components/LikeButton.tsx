@@ -15,6 +15,8 @@ type Props = {
   compact?: boolean;
   /** When false, only the reaction button is rendered (design reaction bar). */
   showLikers?: boolean;
+  /** Keeps reaction summaries outside this component in sync with the button. */
+  onChange?: (state: { liked: boolean; count: number; likers: Author[] }) => void;
 };
 
 function formatLikers(likers: Author[], count: number) {
@@ -32,6 +34,7 @@ export function LikeButton({
   likers,
   compact = false,
   showLikers = true,
+  onChange,
 }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -76,6 +79,20 @@ export function LikeButton({
         });
       }
 
+      const nextLikers = user
+        ? nextLiked
+          ? [
+              { id: user.id, firstName: user.firstName, lastName: user.lastName },
+              ...localLikers.filter((u) => u.id !== user.id),
+            ].slice(0, 8)
+          : localLikers.filter((u) => u.id !== user.id)
+        : localLikers;
+      onChange?.({
+        liked: nextLiked,
+        count: Math.max(0, localCount + (nextLiked ? 1 : -1)),
+        likers: nextLikers,
+      });
+
       return snapshot;
     },
     onError: (err, _vars, snapshot) => {
@@ -83,6 +100,7 @@ export function LikeButton({
         setLocalLiked(snapshot.liked);
         setLocalCount(snapshot.count);
         setLocalLikers(snapshot.likers);
+        onChange?.(snapshot);
       }
       toast.fromError(err, "Could not update like");
     },
@@ -90,8 +108,14 @@ export function LikeButton({
       setLocalLiked(data.liked);
       setLocalCount(data.likeCount);
       setLocalLikers(data.likers ?? []);
+      onChange?.({
+        liked: data.liked,
+        count: data.likeCount,
+        likers: data.likers ?? [],
+      });
       void qc.invalidateQueries({ queryKey: ["feed"] });
       void qc.invalidateQueries({ queryKey: ["comments"] });
+      void qc.invalidateQueries({ queryKey: ["likers", targetType, targetId] });
     },
   });
 

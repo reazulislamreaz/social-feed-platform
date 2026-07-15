@@ -99,7 +99,8 @@ export async function removeLike(
 export async function fetchLikers(
   targetType: "POST" | "COMMENT" | "REPLY",
   targetId: string,
+  limit = 100,
 ) {
-  const { data } = await api.get("/likes", { params: { targetType, targetId } });
+  const { data } = await api.get("/likes", { params: { targetType, targetId, limit } });
   return data.data.likers as import("../types").Author[];
 }

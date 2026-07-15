@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LikeButton } from "./LikeButton";
 import { CommentsSkeleton } from "./FeedSkeleton";
 import { assetUrl } from "../services/api";
@@ -19,26 +19,6 @@ function formatLikedBy(likers: Author[], count: number) {
   if (names.length === 0) return `${count} like${count === 1 ? "" : "s"}`;
   if (count <= names.length) return `Liked by ${names.join(", ")}`;
   return `Liked by ${names.join(", ")} and ${count - names.length} others`;
-}
-
-/** Buddy Script demo feed photos — used when a post has no uploaded image */
-const DEMO_FEED_IMAGES = [
-  "/assets/images/timeline_img.png",
-  "/assets/images/healthy_tracking.jpg",
-  "/assets/images/img1.png",
-  "/assets/images/img2.png",
-  "/assets/images/img3.png",
-  "/assets/images/img4.png",
-  "/assets/images/img5.png",
-  "/assets/images/img6.png",
-];
-
-function demoFeedImage(postId: string) {
-  let hash = 0;
-  for (let i = 0; i < postId.length; i++) {
-    hash = (hash + postId.charCodeAt(i) * (i + 1)) % 997;
-  }
-  return DEMO_FEED_IMAGES[hash % DEMO_FEED_IMAGES.length];
 }
 
 const MicIcon = () => (
@@ -140,6 +120,7 @@ function useTargetLike(
       setLocalLikers(data.likers ?? []);
       void qc.invalidateQueries({ queryKey: ["feed"] });
       void qc.invalidateQueries({ queryKey: ["comments"] });
+      void qc.invalidateQueries({ queryKey: ["likers", targetType, targetId] });
     },
   });
 
@@ -264,14 +245,31 @@ function ReactionPill({
   );
 }
 
-function LikersPanel({ likers, count }: { likers: Author[]; count: number }) {
+function LikersPanel({
+  targetType,
+  targetId,
+  likers,
+  count,
+}: {
+  targetType: LikeTargetType;
+  targetId: string;
+  likers: Author[];
+  count: number;
+}) {
+  const allLikers = useQuery({
+    queryKey: ["likers", targetType, targetId],
+    queryFn: () => api.fetchLikers(targetType, targetId),
+    enabled: count > 0,
+  });
+  const visibleLikers = allLikers.data ?? likers;
+
   if (count <= 0) return null;
   return (
     <div className="_likers_list _likers_inline _mar_t4">
-      <p className="_comment_status_text">{formatLikedBy(likers, count)}</p>
-      {likers.length > 0 && (
+      <p className="_comment_status_text">{formatLikedBy(visibleLikers, count)}</p>
+      {visibleLikers.length > 0 && (
         <ul>
-          {likers.map((u) => (
+          {visibleLikers.map((u) => (
             <li key={u.id}>{displayName(u)}</li>
           ))}
         </ul>
@@ -308,7 +306,14 @@ function ReplyBlock({ reply }: { reply: Reply }) {
             onClick={like.toggleLikers}
             title={formatLikedBy(like.likers, like.count)}
           />
-          {like.showLikers && <LikersPanel likers={like.likers} count={like.count} />}
+          {like.showLikers && (
+            <LikersPanel
+              targetType="REPLY"
+              targetId={reply.id}
+              likers={like.likers}
+              count={like.count}
+            />
+          )}
           <div className="_comment_reply">
             <div className="_comment_reply_num">
               <ul className="_comment_reply_list">
@@ -394,7 +399,14 @@ function CommentBlock({ comment, postId }: { comment: Comment; postId: string })
             onClick={like.toggleLikers}
             title={formatLikedBy(like.likers, like.count)}
           />
-          {like.showLikers && <LikersPanel likers={like.likers} count={like.count} />}
+          {like.showLikers && (
+            <LikersPanel
+              targetType="COMMENT"
+              targetId={comment.id}
+              likers={like.likers}
+              count={like.count}
+            />
+          )}
           <div className="_comment_reply">
             <div className="_comment_reply_num">
               <ul className="_comment_reply_list">
@@ -585,14 +597,24 @@ export function PostCard({ post }: { post: Post }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLikers, setShowLikers] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
-  const demoImage = demoFeedImage(post.id);
-  const [imageSrc, setImageSrc] = useState(
-    () => assetUrl(post.imageUrl) ?? demoImage,
-  );
+  const [imageSrc, setImageSrc] = useState(() => assetUrl(post.imageUrl));
+  const [postLike, setPostLike] = useState({
+    liked: post.likedByMe,
+    count: post.likeCount,
+    likers: post.likers,
+  });
 
   useEffect(() => {
-    setImageSrc(assetUrl(post.imageUrl) ?? demoFeedImage(post.id));
-  }, [post.imageUrl, post.id]);
+    setImageSrc(assetUrl(post.imageUrl));
+  }, [post.imageUrl]);
+
+  useEffect(() => {
+    setPostLike({
+      liked: post.likedByMe,
+      count: post.likeCount,
+      likers: post.likers,
+    });
+  }, [post.likedByMe, post.likeCount, post.likers]);
 
   const comments = useInfiniteQuery({
     queryKey: ["comments", post.id],
@@ -669,37 +691,35 @@ export function PostCard({ post }: { post: Post }) {
         <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap" }}>
           {post.content}
         </h4>
-        <div className="_feed_inner_timeline_image">
-          <img
-            src={imageSrc}
-            alt=""
-            className="_time_img"
-            loading="lazy"
-            onError={() => {
-              if (imageSrc !== demoImage) setImageSrc(demoImage);
-            }}
-          />
-        </div>
+        {imageSrc && (
+          <div className="_feed_inner_timeline_image">
+            <img
+              src={imageSrc}
+              alt=""
+              className="_time_img"
+              loading="lazy"
+              onError={() => setImageSrc(null)}
+            />
+          </div>
+        )}
       </div>
 
       <PostReactsRow
-        likeCount={post.likeCount}
+        likeCount={postLike.count}
         commentCount={post.commentCount}
-        likers={post.likers}
+        likers={postLike.likers}
         onFocusComment={() => commentRef.current?.focus()}
         onShowLikers={() => setShowLikers((v) => !v)}
       />
 
       {showLikers && (
-        <div className="_likers_list _padd_r24 _padd_l24 _mar_b12">
-          <p>{formatLikedBy(post.likers, post.likeCount)}</p>
-          {post.likers.length > 0 && (
-            <ul>
-              {post.likers.map((u) => (
-                <li key={u.id}>{displayName(u)}</li>
-              ))}
-            </ul>
-          )}
+        <div className="_padd_r24 _padd_l24 _mar_b12">
+          <LikersPanel
+            targetType="POST"
+            targetId={post.id}
+            likers={postLike.likers}
+            count={postLike.count}
+          />
         </div>
       )}
 
@@ -707,10 +727,11 @@ export function PostCard({ post }: { post: Post }) {
         <LikeButton
           targetType="POST"
           targetId={post.id}
-          liked={post.likedByMe}
-          count={post.likeCount}
-          likers={post.likers}
+          liked={postLike.liked}
+          count={postLike.count}
+          likers={postLike.likers}
           showLikers={false}
+          onChange={setPostLike}
         />
         <button
           type="button"
