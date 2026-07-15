@@ -118,8 +118,6 @@ function useTargetLike(
       setLocalLiked(data.liked);
       setLocalCount(data.likeCount);
       setLocalLikers(data.likers ?? []);
-      void qc.invalidateQueries({ queryKey: ["feed"] });
-      void qc.invalidateQueries({ queryKey: ["comments"] });
       void qc.invalidateQueries({ queryKey: ["likers", targetType, targetId] });
     },
   });

@@ -113,8 +113,6 @@ export function LikeButton({
         count: data.likeCount,
         likers: data.likers ?? [],
       });
-      void qc.invalidateQueries({ queryKey: ["feed"] });
-      void qc.invalidateQueries({ queryKey: ["comments"] });
       void qc.invalidateQueries({ queryKey: ["likers", targetType, targetId] });
     },
   });
